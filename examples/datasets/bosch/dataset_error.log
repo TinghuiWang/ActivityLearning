@@ -1,0 +1,66 @@
+Dataset B1:
+
+line 45506 - 45507: 2009-08-01T15:47:29.921001
+Date Advanced: 1; hour gap: 0
+
+line 166979 - 166980: 2009-09-07T15:30:35.031001
+Date Advanced: 1; hour gap: 1
+
+line 270813 - 270814: 2009-10-08T15:42:50.109001
+Date Advanced: 1; hour gap: 0
+
+line 371925 - 371926: 2009-11-08T14:48:06.734001
+Date Advanced: 2; hour gap: 1
+
+line 473949 - 473950: 2009-12-09T16:05:32.343001
+Date Advanced: 0; hour gap: -1
+
+Dataset B2:
+
+line 28824 - 28825: 2009-06-22T07:12:14.546001
+Date Advanced: 1; hour gap: 2
+
+line 32166 - 32167: 2009-06-23T11:00:39.656001
+Date Advanced: 12; hour gap: 12
+
+line 64802 - 64803: 2009-07-15T16:08:06.546001
+Date Advanced: 1; hour gap: 0
+
+line 83028 - 83029: 2009-07-22T16:25:49.625001
+Date Advanced: 1; hour gap: 0
+
+line 168049 - 168050: 2009-08-22T16:27:16.781001
+Date Advanced: 16; hour gap: 0
+
+line 174213 - 174214: 2009-09-09T16:01:58.921001
+Date Advanced: 1; hour gap: 0
+
+line 222914 - 222915: 2009-09-27T16:31:12.406001
+Date Advanced: 16; hour gap: 0
+
+line 254920 - 254921: 2009-10-22T07:30:06.812001
+Date Advanced: 19; hour gap: 3
+
+line 300010 - 300011: 2009-11-23T10:17:15.234001
+Date Advanced: 1; hour gap: 0
+
+line 362977 - 362978: 2009-12-09T18:06:37.140001
+Date Advanced: 0; hour gap: -9
+
+Dataset B3:
+
+line 88283 - 88284: 2009-09-08T11:57:15.546001
+Date Advanced: 1; hour gap: 0
+
+line 164561 - 164562: 2009-10-01T11:56:39.796001
+Date Advanced: 2; hour gap: 0
+
+line 275910 - 275911: 2009-11-10T10:53:39.484001
+Date Advanced: 1; hour gap: 4
+
+line 361283 - 361284: 2009-12-09T16:16:45.937001
+Date Advanced: 0; hour gap: -6
+
+line 377807 - 377808: 2009-12-15T10:48:40.218001
+Date Advanced: 1; hour gap: 0
+ 
