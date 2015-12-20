@@ -29,7 +29,7 @@ class AlFeatureTemplate(object):
         # in this routine structure will be called each time we advance to next data record
         self.routine = routine
         # sensor info
-        self.sensorInfo = None
+        self.sensor_info = None
 
     def set_sensor_info(self, sensor_info):
         """
@@ -37,7 +37,7 @@ class AlFeatureTemplate(object):
         :param sensor_info:
         :return:
         """
-        self.sensorInfo = sensor_info
+        self.sensor_info = sensor_info
         if self.routine is not None:
             self.routine.set_sensor_info(sensor_info)
 
