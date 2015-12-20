@@ -27,6 +27,7 @@ class AlFeatureWindowDuration(AlFeatureTemplate):
         :param sensor_name: name of sensor
         :return: a double value
         """
+        self.is_valid = True
         timedelta = data_list[cur_index]['datetime'] - data_list[cur_index - window_size + 1]['datetime']
         window_duration = timedelta.total_seconds()
         if window_duration > 3600 * 12:
@@ -40,7 +41,7 @@ class AlFeatureWindowDuration(AlFeatureTemplate):
                     data_list[cur_index]['datetime'].day != data_list[cur_index - 1]['datetime'].day:
                 date_advanced = (data_list[cur_index]['datetime'] - data_list[cur_index - 1]['datetime']).days
                 hour_advanced = data_list[cur_index]['datetime'].hour - data_list[cur_index - 1]['datetime'].hour
-                print('line %d - %d: %s' % (data_list, cur_index + 1, data_list[cur_index - 1]['datetime'].isoformat()))
+                print('line %d - %d: %s' % (cur_index, cur_index + 1, data_list[cur_index - 1]['datetime'].isoformat()))
                 print('Date Advanced: %d; hour gap: %d' % (date_advanced, hour_advanced))
         if self.normalize:
             return np.float(window_duration) / (3600 * 12)
