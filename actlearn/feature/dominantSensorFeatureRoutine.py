@@ -42,7 +42,7 @@ class AlFeatureUpdateRoutineDominantSensor (AlFeatureUpdateRoutineTemplate):
         for sensor_label in sensor_count.keys():
             if sensor_count[sensor_label] > max_count:
                 max_count = sensor_count[sensor_label]
-                self.dominant_sensor_list[sensor_count] = sensor_label
+                self.dominant_sensor_list[cur_index] = sensor_label
 
     def clear(self):
         """
