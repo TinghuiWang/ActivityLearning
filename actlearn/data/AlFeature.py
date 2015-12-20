@@ -386,6 +386,9 @@ class AlFeature(object):
         while cur_row_id < len(data_list):
             cur_sample_id += self.calculate_window_feature(data_list, cur_row_id, cur_sample_id, is_labeled)
             cur_row_id += 1
+        # Due to sensor event discontinuity, the sample size will be smaller than the num_feature_rows calculated
+        self.x = self.x[0:cur_sample_id, :]
+        self.logger.info('Total amount of feature vectors calculated: %d' % cur_sample_id)
 
     def calculate_window_feature(self, data_list, cur_row_id, cur_sample_id, is_labeled=True):
         """
@@ -529,6 +532,7 @@ class AlFeature(object):
                     f.write('%f\n' % self.x[row_id][col_id])
                 else:
                     f.write('%f,' % self.x[row_id][col_id])
+            f.write('%d' % self.y[row_id])
         f.close()
 
     def save_data_as_xls(self, filename, start_id):
