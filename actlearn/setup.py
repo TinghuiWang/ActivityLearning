@@ -19,6 +19,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('utils')
     config.add_subpackage('data')
     config.add_subpackage('feature')
+    config.add_subpackage('model')
+    config.add_subpackage('training_algorithm')
     return config
 
 if __name__ == '__main__':
