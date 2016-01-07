@@ -1,4 +1,4 @@
-import logging
+from actlearn.log.logger import actlearn_logger
 
 
 class Model(object):
@@ -15,7 +15,7 @@ class Model(object):
         """
         self.params = []
         self.model_name = model_name
-        self.logger = logging.getLogger(model_name)
+        self.logger = actlearn_logger.get_logger(model_name)
         pass
 
     def cost(self, y):

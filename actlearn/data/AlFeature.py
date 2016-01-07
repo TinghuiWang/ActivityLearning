@@ -1,7 +1,7 @@
 import sys
-import logging
 import math
 import numpy as np
+from actlearn.log.logger import actlearn_logger
 
 
 class AlFeature(object):
@@ -11,7 +11,7 @@ class AlFeature(object):
     """
 
     def __init__(self):
-        self.logger = logging.getLogger('AlFeature')
+        self.logger = actlearn_logger.get_logger('AlFeature')
         self.max_window_size = 30
         # Activity List:
         # Dictionary of activity classes, indexed by their name.
@@ -38,6 +38,52 @@ class AlFeature(object):
         self.y = np.array([])
         pass
 
+    def export_to_dict(self):
+        """
+        Export Internal Data to a DICT structure
+        :return:
+        """
+        data = {'struct_name': 'AlFeature',
+                'max_window_size': self.max_window_size,
+                'activity_list': self.activity_list,
+                'sensor_list': self.sensor_list,
+                'num_enabled_sensors': self.num_enabled_sensors,
+                'num_enabled_activities': self.num_enabled_activities,
+                'num_enabled_features': self.num_enabled_features,
+                'num_static_features': self.num_static_features,
+                'num_per_sensor_features': self.num_per_sensor_features,
+                'feature_list': self.feature_list,
+                'num_feature_windows': self.num_feature_windows,
+                'routines': self.routines,
+                'x': self.x,
+                'y': self.y}
+        return data
+
+    def load_from_dict(self, data):
+        """
+        Load from exported dict
+        :type data: dict of C
+        :param data: dictionary that matches export dict style
+        :return:
+        """
+        assert('struct_name' in data.keys())
+        assert(data['struct_name'] == 'AlFeature')
+
+        # Load from DICT
+        self.max_window_size = data['max_window_size']
+        self.activity_list = data['activity_list']
+        self.sensor_list = data['sensor_list']
+        self.num_enabled_sensors = data['num_enabled_sensors']
+        self.num_enabled_activities = data['num_enabled_activities']
+        self.num_enabled_features = data['num_enabled_features']
+        self.num_static_features = data['num_static_features']
+        self.num_per_sensor_features = data['num_per_sensor_features']
+        self.feature_list = data['feature_list']
+        self.num_feature_windows = data['num_feature_windows']
+        self.routines = data['routines']
+        self.x = data['x']
+        self.y = data['y']
+
     def add_activity(self, activity_label, window_size=30):
         """
         Add activity to activity_list with default value
@@ -63,7 +109,7 @@ class AlFeature(object):
         :return: None
         """
         if activity_label in self.activity_list.keys():
-            self.logger.info('Enable Activity %s' % activity_label)
+            self.logger.debug('Enable Activity %s' % activity_label)
             self.activity_list[activity_label]['enable'] = True
             self.assign_activity_indexes()
         else:
@@ -76,7 +122,7 @@ class AlFeature(object):
         :return: None
         """
         if activity_label in self.activity_list.keys():
-            self.logger.info('Disable Activity %s' % activity_label)
+            self.logger.debug('Disable Activity %s' % activity_label)
             self.activity_list[activity_label]['enable'] = False
             self.activity_list[activity_label]['index'] = -1
             self.assign_activity_indexes()
@@ -97,7 +143,7 @@ class AlFeature(object):
             else:
                 activity['index'] = -1
         self.num_enabled_activities = i
-        self.logger.info('Finished assigning index to activities. %d Activities enabled' % i)
+        self.logger.debug('Finished assigning index to activities. %d Activities enabled' % i)
         return i
 
     def get_activities_by_indexes(self, activity_ids):
@@ -114,8 +160,8 @@ class AlFeature(object):
         :param activity_id: index number of activity
         :return: activity label (string)
         """
-        for activity in self.activity_list:
-            if activity_id == activity['index']:
+        for activity in self.activity_list.keys():
+            if activity_id == self.activity_list[activity]['index']:
                 return activity
 
     def populate_activity_list(self, activity_info):
@@ -154,7 +200,7 @@ class AlFeature(object):
         :return:
         """
         if sensor_label in self.sensor_list.keys():
-            self.logger.info('Enable Sensor %s' % sensor_label)
+            self.logger.debug('Enable Sensor %s' % sensor_label)
             self.sensor_list[sensor_label]['enable'] = True
             self.assign_sensor_indexes()
         else:
@@ -167,7 +213,7 @@ class AlFeature(object):
         :return:
         """
         if sensor_label in self.sensor_list.keys():
-            self.logger.info('Disable Sensor %s' % sensor_label)
+            self.logger.debug('Disable Sensor %s' % sensor_label)
             self.sensor_list[sensor_label]['enable'] = False
             self.sensor_list[sensor_label]['index'] = -1
             self.assign_sensor_indexes()
@@ -209,7 +255,7 @@ class AlFeature(object):
         """
         for sensor_label in sensor_info.keys():
             self.add_sensor(sensor_label)
-        self.logger.info('Add %d Sensors into sensorList' % len(self.sensor_list))
+        self.logger.debug('Add %d Sensors into sensorList' % len(self.sensor_list))
 
     def add_routine(self, routine):
         """
@@ -218,7 +264,7 @@ class AlFeature(object):
         :return:
         """
         if routine.name in self.routines.keys():
-            self.logger.info('feature routine %s already existed.' % routine.name)
+            self.logger.debug('feature routine %s already existed.' % routine.name)
         else:
             self.logger.debug('Add feature routine %s: %s' % (routine.name, routine.description))
             self.routines[routine.name] = routine
@@ -276,7 +322,7 @@ class AlFeature(object):
         :return: None
         """
         if feature_name in self.feature_list.keys():
-            self.logger.info('Disable Feature %s: %s' % (feature_name, self.feature_list[feature_name]['description']))
+            self.logger.debug('Disable Feature %s: %s' % (feature_name, self.feature_list[feature_name]['description']))
             self.feature_list[feature_name].enabled = True
             self.feature_list[feature_name].index = -1
             self.assign_feature_indexes()
@@ -292,7 +338,7 @@ class AlFeature(object):
         :return: None
         """
         if feature_name in self.feature_list.keys():
-            self.logger.info('Enable Feature %s: %s' % (feature_name, self.feature_list[feature_name]['description']))
+            self.logger.debug('Enable Feature %s: %s' % (feature_name, self.feature_list[feature_name]['description']))
             self.feature_list[feature_name].enabled = True
             self.assign_feature_indexes()
             if self.feature_list[feature_name].routine is not None:
@@ -320,8 +366,8 @@ class AlFeature(object):
                 feature.index = -1
         self.num_static_features = static_id
         self.num_per_sensor_features = per_sensor_id
-        self.logger.info('Finished assigning index to features. %d Static Features, %d Per Sensor Features' %
-                         (static_id, per_sensor_id))
+        self.logger.debug('Finished assigning index to features. %d Static Features, %d Per Sensor Features' %
+                          (static_id, per_sensor_id))
 
     def count_feature_columns(self):
         """
@@ -388,7 +434,8 @@ class AlFeature(object):
             cur_row_id += 1
         # Due to sensor event discontinuity, the sample size will be smaller than the num_feature_rows calculated
         self.x = self.x[0:cur_sample_id, :]
-        self.logger.info('Total amount of feature vectors calculated: %d' % cur_sample_id)
+        self.y = self.y[0:cur_sample_id]
+        self.logger.debug('Total amount of feature vectors calculated: %d' % cur_sample_id)
 
     def calculate_window_feature(self, data_list, cur_row_id, cur_sample_id, is_labeled=True):
         """

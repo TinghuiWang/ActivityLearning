@@ -19,13 +19,13 @@ def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=Non
     """
     num_training_data = num_data
     num_batch = num_training_data / batch_size
-    model.logger.info("Start Training Model using Stochastic Gradient Descent")
-    model.logger.info("Parameters:")
-    model.logger.info("Training Data: %d" % num_training_data)
-    model.logger.info("batch size: %d" % batch_size)
-    model.logger.info("Number of Batches: %d" % num_batch)
-    model.logger.info("learning rate:")
-    model.logger.info(learning_rate_array)
+    model.logger.debug("Start Training Model using Stochastic Gradient Descent")
+    model.logger.debug("Parameters:")
+    model.logger.debug("Training Data: %d" % num_training_data)
+    model.logger.debug("batch size: %d" % batch_size)
+    model.logger.debug("Number of Batches: %d" % num_batch)
+    model.logger.debug("learning rate:")
+    model.logger.debug(learning_rate_array)
     start_time = time.clock()
     index = T.lscalar()
     givens = {}
@@ -58,10 +58,11 @@ def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=Non
     monitor_result = np.zeros((num_batch, len(model.monitors)))
     for i in range(num_batch):
         monitor_result[i, :] = train_model(i)
-        model.logger.info("batch %d" % i)
+        model.logger.debug("batch %d" % i)
         for monitor_index, monitor in enumerate(model.monitors):
-            model.logger.info("\t%10s: %f" % (monitor.name, monitor_result[monitor_index]))
+            model.logger.debug("\t%10s: %f" % (monitor.name, monitor_result[i][monitor_index]))
     end_time = time.clock()
     total_time = end_time - start_time
-    model.logger.info('total time consumed %.1fs' % total_time)
-    return np.mean(monitor_result, axis=0)
+    model.logger.debug('total time consumed %.1fs' % total_time)
+    batch_monitor = np.mean(monitor_result, axis=0)
+    return batch_monitor
