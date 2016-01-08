@@ -268,13 +268,13 @@ class StackedDenoisingAutoencoder(Model):
     def do_fine_tuning(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
         self.cost = self.logLayer.cost
         for i in range(num_epochs):
-            print('epoch %d' % i)
+            self.logger.info('epoch %d' % i)
             monitor_results = sgd_train(
                 model=self, data=data, label=label,
                 num_data=num_data, batch_size=batch_size,
                 learning_rate_array=learning_rate_array)
             for monitor_index, monitor in enumerate(self.monitors):
-                print("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+                self.logger.info("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
 
     def do_log_layer_training_only(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
         self.cost = self.logLayer.cost
