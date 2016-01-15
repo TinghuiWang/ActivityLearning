@@ -11,7 +11,9 @@ from actlearn.feature.sensorCount import AlFeatureSensorCount
 from actlearn.feature.sensorElapseTime import AlFeatureSensorElapseTime
 
 
-def load_casas_from_file(data_filename, translation_filename=None, dataset_dir='../datasets/bosch/'):
+def load_casas_from_file(data_filename, translation_filename=None,
+                         dataset_dir='../datasets/bosch/',
+                         normalize=True, per_sensor=True):
     # Initialize AlData Structure
     data = AlData()
     # Load Translation File
@@ -31,13 +33,13 @@ def load_casas_from_file(data_filename, translation_filename=None, dataset_dir='
     # feature.DisableActivity('Other_Activity')
     # Add lastEventHour Feature
     feature.featureWindowNum = 1
-    feature.add_feature(AlFeatureSensorCount(normalize=True))
-    feature.add_feature(AlFeatureWindowDuration(normalize=True))
-    feature.add_feature(AlFeatureEventHour(normalize=True))
-    feature.add_feature(AlFeatureEventSensor(per_sensor=True))
-    feature.add_feature(AlFeatureLastDominantSensor(per_sensor=True))
-    feature.add_feature(AlFeatureEventSecond(normalize=True))
-    feature.add_feature(AlFeatureSensorElapseTime(normalize=True))
+    feature.add_feature(AlFeatureSensorCount(normalize=normalize))
+    feature.add_feature(AlFeatureWindowDuration(normalize=normalize))
+    feature.add_feature(AlFeatureEventHour(normalize=normalize))
+    feature.add_feature(AlFeatureEventSensor(per_sensor=per_sensor))
+    feature.add_feature(AlFeatureLastDominantSensor(per_sensor=per_sensor))
+    feature.add_feature(AlFeatureEventSecond(normalize=normalize))
+    feature.add_feature(AlFeatureSensorElapseTime(normalize=normalize))
     # Print Feature Summary
     feature.print_feature_summary()
     # Calculate Features
