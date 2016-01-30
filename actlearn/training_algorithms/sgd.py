@@ -4,7 +4,7 @@ import theano
 import theano.tensor as T
 
 
-def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=None, label=None, monitors=None):
+def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=None, label=None, monitors=None, extra_cost=None):
     """
     Train model with stochastic gradient descent
     :param model: The learning structure
@@ -15,6 +15,7 @@ def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=Non
     :param label: Tensor array contained labels for each data point
     :param params: Parameters in the model that needs to be updated
     :param monitors: Equations of value to be monitored
+    :param extra_cost: Extra Cost to be append to models (for multi-view learning purpose)
     :return: averaged monitored value
     """
     num_training_data = num_data
@@ -43,6 +44,8 @@ def sgd_train(model, data, num_data, batch_size, learning_rate_array, params=Non
         givens[y] = label[index * batch_size: (index + 1) * batch_size]
     if params is None:
         params = model.params
+    if extra_cost is not None:
+        cost += extra_cost
     grad_params = [T.grad(cost, param) for param in params]
     updates = [
         (param, param - learning_rate * grad_param)
