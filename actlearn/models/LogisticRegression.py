@@ -92,6 +92,9 @@ class LogisticRegression(Model):
         # Cost Function
         self.cost = self.negative_log_likelihood
 
+        # Prevalence matrix for use of class-skewed cost calculation
+        self.prevalence = np.ones((n_out,), dtype=theano.config.floatX)
+
         # parameters of the model
         self.params = [self.W, self.b]
 
@@ -123,7 +126,6 @@ class LogisticRegression(Model):
         :type y: theano.tensor.TensorType
         :param y: corresponds to a vector that gives for each example the
                   correct label
-
         Note: we use the mean instead of the sum so that
               the learning rate is less dependent on the batch size
         """
@@ -137,7 +139,7 @@ class LogisticRegression(Model):
         # LP[n-1,y[n-1]]] and T.mean(LP[T.arange(y.shape[0]),y]) is
         # the mean (across minibatch examples) of the elements in v,
         # i.e., the mean log-likelihood across the minibatch.
-        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
+        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y] * T.inv(self.prevalence)[y])
 
     def errors(self, y):
         """Return a float representing the number of errors in the minibatch
@@ -201,7 +203,7 @@ class LogisticRegression(Model):
         self.logger.info("Classification Done in %.1fs" % (end_time - start_time))
         return prediction
 
-    def do_training_sgd(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
+    def do_training_sgd(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1, prevalence=None):
         """
         Use Stochastic Gradient Descent to train the model
         :param data: Training Data Tensor
@@ -212,6 +214,7 @@ class LogisticRegression(Model):
         :param num_epochs: Epochs
         :return: None
         """
+        self.prevalence = prevalence
         for i in range(num_epochs):
             self.logger.info("Epoch %d" % i)
             monitor_results = sgd_train(model=self, data=data, label=label,
@@ -219,3 +222,4 @@ class LogisticRegression(Model):
                                         learning_rate_array=learning_rate_array)
             for monitor_index, monitor in enumerate(self.monitors):
                 self.logger.info("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+        self.prevalence = np.ones((self.W.get_value().shape[1],), dtype=theano.config.floatX)
