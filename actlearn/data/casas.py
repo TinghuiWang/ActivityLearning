@@ -13,7 +13,17 @@ from actlearn.feature.sensorElapseTime import AlFeatureSensorElapseTime
 
 def load_casas_from_file(data_filename, translation_filename=None,
                          dataset_dir='../datasets/bosch/',
-                         normalize=True, per_sensor=True):
+                         normalize=True, per_sensor=True, ignore_other=True):
+    """
+    Load CASAS Data From File
+    :param data_filename:
+    :param translation_filename:
+    :param dataset_dir:
+    :param normalize:
+    :param per_sensor:
+    :param ignore_other:
+    :return:
+    """
     # Initialize AlData Structure
     data = AlData()
     # Load Translation File
@@ -40,6 +50,9 @@ def load_casas_from_file(data_filename, translation_filename=None,
     feature.add_feature(AlFeatureLastDominantSensor(per_sensor=per_sensor))
     feature.add_feature(AlFeatureEventSecond(normalize=normalize))
     feature.add_feature(AlFeatureSensorElapseTime(normalize=normalize))
+    # Select whether disable other activity or not
+    if ignore_other:
+        feature.disable_activity('Other_Activity')
     # Print Feature Summary
     feature.print_feature_summary()
     # Calculate Features
