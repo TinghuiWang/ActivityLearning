@@ -321,7 +321,9 @@ class DenoisingAutoencoder(Model):
         current_input = data + missing_t * mask
         hidden_output = self.get_hidden_values(current_input)
         reconstruct_input = self.get_reconstructed_input(hidden_output)
-        cost = T.mean(T.sum(T.pow(reconstruct_input - current_input, 2), axis=1))
+        cost = T.mean(T.sum(T.pow(reconstruct_input - current_input, 2) * (1-mask), axis=1))
+        #L = - T.sum(current_input * T.log(reconstruct_input) + (1 - current_input) * T.log(1 - reconstruct_input), axis=1)
+        #cost = T.abs_(T.mean(L))
         grad = T.grad(cost, missing_t)
         updates = {(missing_t, missing_t - learning_rate * grad)}
         reconstruct_function = theano.function(
@@ -330,7 +332,7 @@ class DenoisingAutoencoder(Model):
             updates=updates,
             givens={}
         )
-        theano.printing.pydotprint(reconstruct_function, outfile='./mnist_sda_multiview_reconstruct.png', var_with_name_simple=True)
+        #theano.printing.pydotprint(reconstruct_function, outfile='./mnist_sda_multiview_reconstruct.png', var_with_name_simple=True)
         for i in range(iterations):
             avg_cost = reconstruct_function()
             print('avg_cost: %f' % avg_cost[0])

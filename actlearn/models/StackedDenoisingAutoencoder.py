@@ -252,17 +252,17 @@ class StackedDenoisingAutoencoder(Model):
             else:
                 da_inputs.append(reconstruct_input[i-1])
             reconstruct_input.append(self.dA_layers[num_dA_layers-i-1].get_reconstructed_input(da_inputs[i]))
-        predict_model = theano.function(
+        reconstruct_function = theano.function(
             inputs=[],
             outputs=[reconstruct_input[num_dA_layers-1]],
             givens={
                 self.x: data
             }
         )
-        theano.printing.pydotprint(predict_model, outfile='./mnist_sda_reconstruction.png', var_with_name_simple=True)
-        prediction = predict_model()
+        theano.printing.pydotprint(reconstruct_function, outfile='./mnist_sda_reconstruction.png', var_with_name_simple=True)
+        prediction = reconstruct_function()
         end_time = time.clock()
-        print("Classification Done in %.1fs" % (end_time - start_time))
+        print("Reconstruction Done in %.1fs" % (end_time - start_time))
         return prediction
 
     def do_fine_tuning(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
@@ -288,17 +288,120 @@ class StackedDenoisingAutoencoder(Model):
             for monitor_index, monitor in enumerate(self.monitors):
                 print("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
 
-    def opt_missing_input(self, data, mask):
-        da_inputs = []
+    def opt_missing_input(self, data, mask, batch_size=10, learning_rate=0.5, iterations=10000):
+        """
+        Optmizing for the missing input masked by mask
+        :type data: numpy.array
+        :param data:
+        :param mask:
+        :return:
+        """
+        # init_missing = np.asarray(
+        #     np.random.uniform(
+        #         low=0,
+        #         high=1,
+        #         size=data.get_value().shape
+        #     ),
+        #     dtype=theano.config.floatX
+        # )
+        result = np.zeros(data.get_value().shape, dtype=theano.config.floatX)
+        init_missing = np.zeros((batch_size, data.get_value().shape[1]), dtype=theano.config.floatX)
+        missing_t = theano.shared(value=init_missing, name='Missing', borrow=True)
+        input_view = T.matrix('view')
+        mask_view = T.matrix('mask')
+        hidden_values = []
         reconstruct_input = []
         num_dA_layers = len(self.dA_layers)
+        hidden_values.append(input_view + missing_t * mask_view)
         for i in range(num_dA_layers):
-            if i == 0:
-                da_inputs.append(self.dA_layers[num_dA_layers-i-1].get_hidden_values(self.dA_layers[num_dA_layers-i-1].x))
-            else:
-                da_inputs.append(reconstruct_input[i-1])
-            reconstruct_input.append(self.dA_layers[num_dA_layers-i-1].get_reconstructed_input(da_inputs[i]))
+            hidden_values.append(self.dA_layers[i].get_hidden_values(hidden_values[i]))
+        reconstruct_input.append(hidden_values[num_dA_layers])
+        for i in range(num_dA_layers):
+            reconstruct_input.append(self.dA_layers[num_dA_layers-i-1].get_reconstructed_input(reconstruct_input[i]))
+        # Two options for cost function:
+        # 1. Overall Output is as close as input
+        # 2. Known part is close
+        input_data = hidden_values[0]
+        output_data = reconstruct_input[num_dA_layers]
+        cost = T.mean(T.sum(T.pow(output_data - input_data, 2), axis=1))
+        # Create Update Matrix
+        grad = T.grad(cost, missing_t)
+        updates = {(missing_t, missing_t - learning_rate * grad)}
+        index = T.lscalar()
         reconstruct_function = theano.function(
-            inputs=[],
-            outputs=[]
+            inputs=[index],
+            outputs=[cost],
+            updates=updates,
+            givens={
+                input_view: data[index * batch_size:(index + 1) * batch_size],
+                mask_view: mask[index * batch_size:(index + 1) * batch_size],
+            }
         )
+        # Run Reconstruction
+        data_num = data.get_value().shape[0]
+        num_batch = data_num / batch_size
+        for batch in range(num_batch):
+            init_missing[:][:] = 0
+            missing_t.set_value(init_missing)
+            for i in range(iterations):
+                avg_cost = reconstruct_function(batch)
+            print('avg_cost: %f' % avg_cost[0])
+            result[batch * batch_size:(batch + 1) * batch_size] = \
+                missing_t.get_value() * mask.get_value()[batch * batch_size : (batch + 1) * batch_size] + \
+                data.get_value()[batch * batch_size : (batch + 1) * batch_size]
+        return result
+
+    def export_to_graphviz(self, feature_list=None):
+        """
+        export to graphviz dot string
+        :type feature_list: list of str
+        :param feature_list: Feature Lists
+        :return: String
+        """
+        output = "digraph FNN {\noverlap=false\n"
+        # Create Input Nodes
+        num_ins = self.sigmoid_layers[0].W.get_value().shape[0]
+        if feature_list is None:
+            for i in range(num_ins):
+                output += "%u [label=\"%d\" shape=\"box\"]\n" % (i, i)
+        else:
+            for i in range(num_ins):
+                output += "%u [label=\"%s\" shape=\"box\"]\n" % (i, feature_list[i])
+        node_num = num_ins
+        # Create Intermediate Nodes
+        for layer in self.sigmoid_layers:
+            # Get parameter values
+            W_value = layer.W.get_value()
+            b_value = layer.b.get_value()
+            # Create Intermediate Nodes
+            num_outs = W_value.shape[1]
+            for i in range(num_outs):
+                output += "%u [label=\"%d\" shape=\"circle\"]\n" % (node_num + i, i)
+            # Create Edges
+            for i in range(num_ins):
+                for j in range(num_outs):
+                    if i == 0:
+                        output += "%u -> %u [headlabel=\"%.5f\" taillabel=\"%.5f\"]\n" % \
+                                  (node_num - num_ins + i, node_num + j, W_value[i][j], b_value[j])
+                    else:
+                        output += "%u -> %u [headlabel=\"%.5f\"]\n" % \
+                                  (node_num - num_ins + i, node_num + j, W_value[i][j])
+            node_num += num_outs
+            num_ins = num_outs
+        # Draw The Final Output Layer
+        W_value = self.logLayer.W.get_value()
+        b_value = self.logLayer.b.get_value()
+        num_outs = W_value.shape[1]
+        for i in range(num_outs):
+            output += "%u [label=\"Class\\n%d\" shape=\"doublecircle\"]\n" % (node_num + i, i)
+        for i in range(num_ins):
+            for j in range(num_outs):
+                if i == 0:
+                    output += "%u -> %u [headlabel=\"%.5f\" taillabel=\"%.5f\"]\n" % \
+                              (node_num - num_ins + i, node_num + j, W_value[i][j], b_value[j])
+                else:
+                    output += "%u -> %u [headlabel=\"%.5f\"]\n" % \
+                              (node_num - num_ins + i, node_num + j, W_value[i][j])
+        # Create Edges
+        output += "}\n"
+        return output
