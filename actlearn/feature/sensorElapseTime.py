@@ -32,6 +32,10 @@ class AlFeatureSensorElapseTime(AlFeatureTemplate):
         timedelta = data_list[cur_index]['datetime'] - self.routine.sensor_fire_log[sensor_name]
         sensor_duration = timedelta.total_seconds()
         if self.normalize:
-            return np.float(sensor_duration)/(24*3600)
+            elapse_time = np.float(sensor_duration)/(24*3600)
+            # If the sensor is not fired in a day, just round it up to a day ^.^
+            if elapse_time > 1:
+                elapse_time = 1.
+            return elapse_time
         else:
             return np.float(sensor_duration)
