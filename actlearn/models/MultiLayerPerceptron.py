@@ -265,7 +265,7 @@ class MultiLayerPerceptron(Model):
         print("Classification Done in %.1fs" % (end_time - start_time))
         return prediction
 
-    def do_training_sgd(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
+    def do_training_sgd(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1, prevalence=None):
         """
         Use Stochastic Gradient Descent to train the model
         :param data: Training Data Tensor
@@ -274,8 +274,11 @@ class MultiLayerPerceptron(Model):
         :param batch_size: The size per batch
         :param learning_rate_array: Learning Rate for each parameter
         :param num_epochs: Epochs
+        :param prevalence: inverse of Percentage of each class in the training samples
         :return: None
         """
+        if prevalence is not None:
+            self.logRegressionLayer.prevalence = prevalence
         for i in range(num_epochs):
             self.logger.info("Epoch %d" % i)
             monitor_results = sgd_train(model=self, data=data, label=label,
@@ -283,3 +286,5 @@ class MultiLayerPerceptron(Model):
                                         learning_rate_array=learning_rate_array)
             for monitor_index, monitor in enumerate(self.monitors):
                 self.logger.info("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+        self.logRegressionLayer.prevalence = np.ones(
+                (self.logRegressionLayer.W.get_value().shape[1],), dtype=theano.config.floatX)
