@@ -323,14 +323,15 @@ class StackedDenoisingAutoencoder(Model):
         # 2. Known part is close
         input_data = hidden_values[0]
         output_data = reconstruct_input[num_dA_layers]
-        cost = T.mean(T.sum(T.pow(output_data - input_data, 2), axis=1))
+        cost = T.sum(T.pow(output_data - input_data, 2))
+        monitor = cost / batch_size
         # Create Update Matrix
         grad = T.grad(cost, missing_t)
         updates = {(missing_t, missing_t - learning_rate * grad)}
         index = T.lscalar()
         reconstruct_function = theano.function(
             inputs=[index],
-            outputs=[cost],
+            outputs=[monitor],
             updates=updates,
             givens={
                 input_view: data[index * batch_size:(index + 1) * batch_size],
@@ -345,7 +346,7 @@ class StackedDenoisingAutoencoder(Model):
             missing_t.set_value(init_missing)
             for i in range(iterations):
                 avg_cost = reconstruct_function(batch)
-            print('avg_cost: %f' % avg_cost[0])
+                print('avg_cost: %f' % avg_cost[0])
             result[batch * batch_size:(batch + 1) * batch_size] = \
                 missing_t.get_value() * mask.get_value()[batch * batch_size : (batch + 1) * batch_size] + \
                 data.get_value()[batch * batch_size : (batch + 1) * batch_size]
