@@ -1,5 +1,6 @@
 import sys
 import math
+import time
 import numpy as np
 from actlearn.log.logger import actlearn_logger
 
@@ -36,6 +37,7 @@ class AlFeature(object):
 
         self.x = np.array([])
         self.y = np.array([])
+        self.time = np.array([])
         pass
 
     def export_to_dict(self):
@@ -56,7 +58,8 @@ class AlFeature(object):
                 'num_feature_windows': self.num_feature_windows,
                 'routines': self.routines,
                 'x': self.x,
-                'y': self.y}
+                'y': self.y,
+                'time': self.time}
         return data
 
     def load_from_dict(self, data):
@@ -83,6 +86,7 @@ class AlFeature(object):
         self.routines = data['routines']
         self.x = data['x']
         self.y = data['y']
+        self.time = data['time']
 
     def add_activity(self, activity_label, window_size=30):
         """
@@ -423,6 +427,7 @@ class AlFeature(object):
         num_feature_rows = self.count_samples(data_list, is_labeled)
         self.x = np.zeros((num_feature_rows, num_feature_columns), dtype=np.float)
         self.y = np.zeros(num_feature_rows, dtype=np.integer)
+        self.time = np.zeros(num_feature_rows, dtype=np.float)
         cur_row_id = self.max_window_size - 1
         cur_sample_id = 0
         # Execute feature update routine
@@ -435,6 +440,7 @@ class AlFeature(object):
         # Due to sensor event discontinuity, the sample size will be smaller than the num_feature_rows calculated
         self.x = self.x[0:cur_sample_id, :]
         self.y = self.y[0:cur_sample_id]
+        self.time = self.time[0:cur_sample_id]
         self.logger.debug('Total amount of feature vectors calculated: %d' % cur_sample_id)
 
     def calculate_window_feature(self, data_list, cur_row_id, cur_sample_id, is_labeled=True):
@@ -489,6 +495,7 @@ class AlFeature(object):
             return 0
         if is_labeled:
             self.y[cur_sample_id] = self.activity_list[data_list[cur_row_id]['activity']]['index']
+        self.time[cur_sample_id] = time.mktime(data_list[cur_row_id]['datetime'].timetuple())
         return 1
 
     def print_feature_summary(self):

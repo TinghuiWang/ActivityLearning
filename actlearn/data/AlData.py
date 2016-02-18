@@ -1,7 +1,7 @@
 import os
 import sys
 import logging
-from actlearn.utils.time import *
+from actlearn.utils.get_date_time import *
 
 
 class AlData(object):
