@@ -13,7 +13,7 @@ from actlearn.feature.sensorElapseTime import AlFeatureSensorElapseTime
 
 def load_casas_from_file(data_filename, translation_filename=None,
                          dataset_dir='../datasets/bosch/',
-                         normalize=True, per_sensor=True, ignore_other=True):
+                         normalize=True, per_sensor=True, ignore_other=False):
     """
     Load CASAS Data From File
     :param data_filename:
@@ -59,4 +59,5 @@ def load_casas_from_file(data_filename, translation_filename=None,
     feature.populate_feature_array(data.data)
     # Return features data
     return feature
+
 
