@@ -24,6 +24,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('training_algorithms')
     config.add_subpackage('log')
     config.add_subpackage('decision_tree')
+    config.add_subpackage('clustering')
     return config
 
 if __name__ == '__main__':
