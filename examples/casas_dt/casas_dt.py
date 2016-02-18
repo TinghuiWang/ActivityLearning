@@ -9,7 +9,7 @@ from actlearn.decision_tree.tree import DecisionTree
 from actlearn.utils.confusion_matrix import get_confusion_matrix
 from actlearn.utils.classifier_performance import performance_index, get_performance_array
 from actlearn.data.AlFeature import AlFeature
-
+from actlearn.utils.event_bar_plot import event_bar_plot
 
 if __name__ == '__main__':
     # Set current directory to local directory
@@ -40,11 +40,14 @@ if __name__ == '__main__':
         num_samples = feature.x.shape[0]
         train_index = []
         test_index = []
-        for j in range(num_samples):
-            if j % 3 == 0:
-                test_index.append(j)
-            else:
-                train_index.append(j)
+        # for j in range(num_samples):
+        #     if j % 3 == 0:
+        #         test_index.append(j)
+        #     else:
+        #         train_index.append(j)
+        num_test = num_samples / 3
+        test_index = range(num_samples - num_test, num_samples)
+        train_index = range(num_samples - num_test)
         decision_tree = DecisionTree(feature.x.shape[1], feature.num_enabled_activities)
         # Load Decision Tree Data
         dt_filename = 'dt_' + datafile + '.pkl'
@@ -58,9 +61,13 @@ if __name__ == '__main__':
             dt_file = open(dt_filename, mode='w')
             pickle.dump(dt_dict, dt_file, protocol=-1)
         dt_file.close()
-        print(feature.x.shape[0])
+        # print(feature.x.shape[0])
         predicted_y = decision_tree.classify(feature.x[test_index][:])
-        print(predicted_y)
+        # print(predicted_y)
+        event_bar_plot(feature.time[test_index], feature.y[test_index], feature.num_enabled_activities,
+                       classified=np.asarray(predicted_y, dtype=np.int),
+                       ignore_activity=feature.activity_list['Other_Activity']['index'],
+                       max_days=10)
         confusion_matrix = get_confusion_matrix(num_classes=feature.num_enabled_activities,
                                                 label=feature.y[test_index], predicted=predicted_y)
         correctness = (confusion_matrix.trace() / float(predicted_y.shape[0])) * 100
