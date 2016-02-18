@@ -11,7 +11,7 @@ default_color_list = ['yellow', 'blue', 'green',
                       'lightpink', 'lime', 'gray', 'darkgoldenrod',
                       'dogerblue', 'deeppink']
 
-def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activity=-1):
+def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activity=-1, max_days=30):
     """
     :type time_array: np.array
     :param time_array: array of time in float format
@@ -54,7 +54,7 @@ def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activ
         y.append(15)
         y_label.append('%2d.%2d' % (cur_date.month, cur_date.day))
     i = 0
-    while i < num_events and num_days < 31:
+    while i < num_events and num_days < max_days:
         # Log events plot locations
         cur_datetime = datetime.fromtimestamp(time_array[i])
         cur_label = label[i]
