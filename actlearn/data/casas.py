@@ -77,7 +77,7 @@ def get_week_boundary(feature):
     for i in range(feature.time.shape[0]):
         today = datetime.fromtimestamp(feature.time[i]).date()
         delta = today - last_record
-        if delta.days == 7:
+        if delta.days >= 7:
             last_record = today
             week_array.append(i)
     return week_array
