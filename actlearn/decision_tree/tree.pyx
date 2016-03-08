@@ -58,8 +58,8 @@ cdef class DecisionTree:
     cdef DecisionTreeNode* root
     cdef int num_classes
     cdef int feature_num
-    cdef np.ndarray x
-    cdef np.ndarray y
+    cdef double[:,:] x
+    cdef long[:] y
     cdef unsigned long *train_array
     cdef unsigned long training_num
     cdef int minimum_object_of_leaf
