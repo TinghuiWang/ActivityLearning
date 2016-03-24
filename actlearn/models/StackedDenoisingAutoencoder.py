@@ -182,6 +182,35 @@ class StackedDenoisingAutoencoder(Model):
             layer.clear()
         self.logLayer.clear()
 
+    def export_to_dict(self):
+        """
+        Save the parameters of sda to a dict structure that can be saved in a project structure
+        :return:
+        """
+        data = {
+            'type': 'model',
+            'name': 'StackedDenoisingAutoencoder',
+            'data': self.params,
+            'modified': time.time()
+        }
+        return data
+
+    def load_from_dict(self, data):
+        """
+        Load the parameters from a dict structure
+        :type data: dict
+        :param data: model data saved in a dict structure
+        :return:
+        """
+        # Check Dict Type, Name
+        assert({'type', 'name', 'data', 'modified'}.issubset(data.items()))
+        assert(data['type'] == 'model')
+        assert(data['name'] == 'StackedDenoisingAutoencoder')
+        # Load Model Data
+        loaded_params = data['data']
+        for param, loaded_param in zip(self.params, loaded_params):
+            param.set_value(loaded_param.get_value())
+
     def save(self, filename):
         """
         :param filename:
@@ -287,6 +316,22 @@ class StackedDenoisingAutoencoder(Model):
                 params=self.logLayer.params)
             for monitor_index, monitor in enumerate(self.monitors):
                 print("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+
+    def get_log_layer_input(self, data):
+        """
+        Get Inputs for Logistic Regression Classification Layer
+        :param data: test tensor
+        :return:
+        """
+        last_layer_fn = theano.function(
+            inputs=[],
+            outputs=[self.sigmoid_layers[self.n_layers - 1].output],
+            givens={
+                self.x: data
+            }
+        )
+        result = last_layer_fn()
+        return result[0]
 
     def opt_missing_input(self, data, mask, batch_size=10, learning_rate=0.5, iterations=10000):
         """
