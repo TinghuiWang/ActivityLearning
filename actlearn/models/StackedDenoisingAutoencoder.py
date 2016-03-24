@@ -203,7 +203,7 @@ class StackedDenoisingAutoencoder(Model):
         :return:
         """
         # Check Dict Type, Name
-        assert({'type', 'name', 'data', 'modified'}.issubset(data.items()))
+        assert({'type', 'name', 'data', 'modified'}.issubset(data.keys()))
         assert(data['type'] == 'model')
         assert(data['name'] == 'StackedDenoisingAutoencoder')
         # Load Model Data
