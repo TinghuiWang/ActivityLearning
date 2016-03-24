@@ -65,29 +65,41 @@ def load_casas_from_file(data_filename, translation_filename=None,
     return feature
 
 
-def get_week_boundary(feature):
+def get_boundary(feature, period='week'):
     """
     Indices boudary separated by weeks
     :type feature: AlFeature
     :param feature:
+    :type period: str
+    :param period: week or day (week - 7, day - 1, month - 31)
     :return: array
     """
+    if period == 'month':
+        period_in_days = 30
+    elif period == 'day':
+        period_in_days = 1
+    else:
+        period_in_days = 7
     week_array = []
     last_record = datetime.fromtimestamp(feature.time[0]).date()
     for i in range(feature.time.shape[0]):
         today = datetime.fromtimestamp(feature.time[i]).date()
         delta = today - last_record
-        if delta.days >= 7:
+        if delta.days >= period_in_days:
             last_record = today
             week_array.append(i)
     return week_array
 
 
-def plot_casas_learning_curve(filename_array):
+def plot_casas_learning_curve(filename_array, fig_fname='', fig_format='pdf'):
     """
     Plot Learning Curve for CASAS data on a day-by-day or week-by-week bases
     :type filename_array: list of str
     :param filename_array:
+    :type fig_fname: str
+    :param fig_fname: file name to save the figure
+    :type fig_format: str
+    :param fig_format: image format the figure will be saved to
     :return:
     """
     logger = actlearn_logger.get_logger('casas_learning_curve')
@@ -135,7 +147,10 @@ def plot_casas_learning_curve(filename_array):
     ax.set_yticks(y)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels)
-    plt.show()
+    if fig_fname != '':
+        fig.savefig(fig_fname, transparent=True, format=fig_format, bbox_inches='tight')
+    else:
+        plt.show()
     return
 
 
@@ -157,3 +172,111 @@ def save_casas_learning_curve(filename, curve_name, value_array, week_or_day):
     }
     pickle.dump(data, fp, protocol=-1)
     fp.close()
+
+
+def casas_where_are_the_errors(y, predicted_y, label_array, filename=None):
+    """
+    Go through the prediction and see how errors occur.
+    The function classify them into three categories:
+    0. The errors that can be fixed by enforcing activity continuity
+    1. Shifted Start point of activity
+    2. Shifted End point of activity
+    3. Errors that totally misclassified an activity
+    4. Other mistakes
+    :type y: numpy.array
+    :param y: original labels
+    :type predicted_y: numpy.array
+    :param predicted_y: predicted labels
+    :type label_array: list
+    :param label_array: list of labels organized in order
+    :type filename: str
+    :param filename: Name of the pkl file to which summary is saved
+    :return: dictionary that contain all the information
+    """
+    error_summary = {}
+    for label in label_array:
+        error_summary[label] = {
+            'glitch': 0.,
+            'shifted_in': 0.,
+            'shifted_out': 0.,
+            'misclassification': 0.,
+            'other': 0.
+        }
+    prev_label = y[0]
+    start = 0
+    total_error = 0
+    for i in range(y.shape[0]):
+        cur_label = y[i]
+        # Record Total Errors
+        if y[i] != predicted_y[i]:
+            total_error += 1
+        # If an activity comes to an end
+        if cur_label != prev_label:
+            end = i
+            # Look for Offset Error
+            error_status = 'shifted_in'
+            offset_label = -1
+            label_right = 0
+            miss = 0.
+            glitch = 0.
+            # Check if it is a total miss
+            for j in range(start, end):
+                # Find errors and then determine what type it is
+                if predicted_y[j] != y[j]:
+                    if label_right == 0 and (offset_label == -1 or predicted_y[j] == offset_label):
+                        # Offset In Calculation
+                        offset_label = predicted_y[j]
+                        miss += 1
+                        error_status = 'shifted_in'
+                    elif label_right == 1 and (offset_label == -1 or predicted_y[j] == offset_label):
+                        # If a new label (other than previous shifted label),
+                        # and we did get new label classified, count it as glitch
+                        offset_label = predicted_y[j]
+                        miss += 1
+                        error_status = 'glitch'
+                    else:
+                        # We have not got the right label, and the classification changed to other label
+                        # it is still a miss and submit it to other
+                        offset_label = -2
+                        error_status = 'other'
+                        miss += 1
+                else:
+                    # We arrive at a point where they are the same
+                    # Submit calculated offset and stop counting offset
+                    error_summary[label_array[y[j]]][error_status] += miss
+                    miss = 0
+                    offset_label = -1
+                    label_right = 1
+            if miss == (end - start):
+                # It is a total misclassification
+                error_summary[label_array[prev_label]]['misclassification'] += miss
+            else:
+                # It is shift out instead of glitch
+                error_summary[label_array[prev_label]]['shifted_out'] += miss
+            # Update Start, End, and label
+            start = i
+            prev_label = cur_label
+    if filename is not None:
+        fp = open(filename, 'w+')
+        pickle.dump(error_summary, fp, protocol=-1)
+        fp.close()
+    return error_summary
+
+
+def plot_error_summary(filename_array, label_array):
+    """
+    :return:
+    """
+    logger = actlearn_logger.get_logger('casas_error_summary')
+    # Load data into array of dictionary
+    load_error = False
+    learning_data = []
+    for fname in filename_array:
+        if os.path.exists(fname):
+            fp = open(fname, 'r')
+            learning_data.append(pickle.load(fp))
+        else:
+            logger.error('Cannot find file %s' % fname)
+            load_error = True
+    if load_error:
+        return
