@@ -7,6 +7,7 @@ cimport numpy as np
 import sys
 from actlearn.log.logger import actlearn_logger
 import logging
+import time
 
 cdef extern from "math.h":
     cdef float log2f(float x)
@@ -621,8 +622,8 @@ cdef class DecisionTree:
 
     def export_to_dict(self):
         """
-        Export to a list object so that the value can be stored in pickle
-        The node in dictionary is stored in pre-order transversal
+        Save the decision to a dict structure
+        The decision tree is stored in pre-order transversal
         :return: dict
         """
         cdef DecisionTreeNode* root
@@ -644,10 +645,15 @@ cdef class DecisionTree:
         cdef object logger
 
         data = {
-            'num_classes': self.num_classes,
-            'feature_num': self.feature_num,
-            'training_num': self.training_num,
-            'root': self.node_to_dict(self.root)
+            'type': 'model',
+            'name': 'DecisionTree',
+            'modified': time.time(),
+            'data': {
+                'num_classes': self.num_classes,
+                'feature_num': self.feature_num,
+                'training_num': self.training_num,
+                'root': self.node_to_dict(self.root)
+            }
         }
         return data
 
@@ -679,14 +685,26 @@ cdef class DecisionTree:
     def load_from_dict(self, data):
         """
         Load Decision Tree from Dictionary Structure
+        :type data: dict
         :param data:
         :return:
         """
+        # Check Dict Type, Name
+        if not {'type', 'name', 'data', 'modified'}.issubset(data.keys()):
+            self.logger.error('Dict Keys Asserssion Error: got %s' % str(data.keys()))
+            return
+        if data['type'] != 'model':
+            self.logger.error('Dict Type should be model but got %s instead' % data['type'])
+            return
+        if data['name'] != 'DecisionTree':
+            self.logger.error('Model Name should be DecisionTree but got %s instead' % data['name'])
+            return
+        # Load Decision Tree
         if self.root == NULL:
-            self.num_classes = data['num_classes']
-            self.feature_num = data['feature_num']
-            self.training_num = data['training_num']
-            self.root = <DecisionTreeNode *> self.dict_to_node(data['root'])
+            self.num_classes = data['data']['num_classes']
+            self.feature_num = data['data']['feature_num']
+            self.training_num = data['data']['training_num']
+            self.root = <DecisionTreeNode *> self.dict_to_node(data['data']['root'])
         else:
             self.logger.error("Cannot Load Decision Tree Since the root is not NULL")
 
