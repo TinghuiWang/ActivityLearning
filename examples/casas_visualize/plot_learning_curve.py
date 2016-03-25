@@ -1,6 +1,6 @@
 import os
 import sys
-from actlearn.data.casas import plot_casas_learning_curve
+from actlearn.utils.plot_result import plot_result_time_series
 
 
 if __name__ == '__main__':
@@ -17,5 +17,5 @@ if __name__ == '__main__':
     if len(learning_curve_files) == 0:
         sys.stderr.write('No learning curve files found\n')
     else:
-        plot_casas_learning_curve(learning_curve_files)
+        plot_result_time_series(learning_curve_files, fig_fname='test.pdf')
 
