@@ -74,7 +74,7 @@ if __name__ == '__main__':
             result_name = '%s sda %d layers %d nodes' % (datafile, len(hidden_layer), hidden_layer[0])
             learning_result = AlResult(result_name=result_name, data_fname=datafile, mode='by_week')
             if os.path.exists(learning_result_fname):
-                learning_result.load_result(learning_result_fname)
+                learning_result.load_from_file(learning_result_fname)
             for week_id in range(len(week_array) - 1):
                 if week_id == 0:
                     train_index = range(0, week_array[week_id])
@@ -82,9 +82,9 @@ if __name__ == '__main__':
                     train_index = range(week_array[week_id - 1], week_array[week_id])
                 test_index = range(week_array[week_id], week_array[week_id + 1])
                 # Performance Evaluation
-                result_key = 'week %d' % week_id
-                result = learning_result.get_result_by_key(result_key)
-                if result is None:
+                record_key = 'week %d' % week_id
+                record = learning_result.get_record_by_key(record_key)
+                if record is None:
                     model.do_pretraining(data=x_tensor[train_index],
                                          num_data=len(train_index), batch_size=10,
                                          learning_rate_array=pre_training_learning_rate,
@@ -99,15 +99,15 @@ if __name__ == '__main__':
                     (overall_performance, per_class_performance) = \
                         get_performance_array(num_classes=feature.num_enabled_activities,
                                               confusion_matrix=confusion_matrix)
-                    learning_result.add_result(model.export_to_dict(), key=result_key,
+                    learning_result.add_record(model.export_to_dict(), key=record_key,
                                                confusion_matrix=confusion_matrix,
                                                overall_performance=overall_performance,
                                                per_class_performance=per_class_performance)
                 else:
-                    model.load_from_dict(result['model'])
-                    confusion_matrix = result['confusion_matrix']
-                    overall_performance = result['overall_performance']
-                    per_class_performance = result['per_class_performance']
+                    model.load_from_dict(record['model'])
+                    confusion_matrix = record['confusion_matrix']
+                    overall_performance = record['overall_performance']
+                    per_class_performance = record['per_class_performance']
                 # casas_where_are_the_errors(feature.y[test_index], predicted_y,
                 #                            label_array=[feature.get_activity_by_index(k)
                 #                                         for k in range(feature.num_enabled_activities)],
@@ -140,4 +140,4 @@ if __name__ == '__main__':
                     for c in range(num_performance):
                         dataset_sheet.write(r+1, c+1, per_class_performance[r][c])
                 book.save('casas_sda_byweek.xls')
-                learning_result.save_result(learning_result_fname)
+                learning_result.save_to_file(learning_result_fname)
