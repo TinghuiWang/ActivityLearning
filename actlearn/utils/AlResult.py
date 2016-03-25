@@ -106,3 +106,8 @@ class AlResult:
             fp = open(fname, 'r')
             self.data = pickle.load(fp)
             fp.close()
+            # Due to naming change, result is renamed to records.
+            # The following piece of codes update the naming automatically when detected
+            if 'result' in self.data.keys():
+                self.data['records'] = self.data.pop('result', None)
+                self.save_to_file(fname)
