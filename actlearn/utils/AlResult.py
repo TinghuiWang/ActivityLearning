@@ -12,6 +12,12 @@ class AlResult:
     the evaluation result for easy plot
     """
     def __init__(self, result_name='', data_fname='', mode='single_shot'):
+        """
+        :param result_name:
+        :param data_fname:
+        :param mode: single_shot, by_week, by_day
+        :return:
+        """
         cur_time = time.time()
         self.data = {
             'result_name': result_name,
@@ -19,16 +25,46 @@ class AlResult:
             'created_time': cur_time,
             'modified_time': cur_time,
             'mode': mode,
-            'result': collections.OrderedDict()
+            'records': collections.OrderedDict()
         }
         return
 
-    def add_result(self, model, key='single_shot', confusion_matrix=None,
+    def get_mode(self):
+        """
+        Get Result Mode
+        :return:
+        """
+        return self.data['mode']
+
+    def get_num_records(self):
+        """
+        Get the length of result records in current instance
+        :return:
+        """
+        return len(self.data['records'])
+
+    def get_record_keys(self):
+        """
+        Get List of keys to all the records
+        :return:
+        """
+        return self.data['records'].keys()
+
+    def get_name(self):
+        """
+        Get the name of current result records
+        :return:
+        """
+        return self.data['result_name']
+
+    def add_record(self, model, key='single_shot', confusion_matrix=None,
                    per_class_performance=None, overall_performance=None):
         """
         :param model:
         :param confusion_matrix:
         :param key:
+        :param per_class_performance:
+        :param overall_performance:
         :return:
         """
         cur_result = {
@@ -37,26 +73,20 @@ class AlResult:
             'per_class_performance': per_class_performance,
             'overall_performance': overall_performance
         }
-        self.data['result'][key] = cur_result
+        self.data['records'][key] = cur_result
 
-    def get_result_by_key(self, key):
+    def get_record_by_key(self, key):
         """
         Get result corresponding to specific key
         :param key:
         :return:
         """
-        if key in self.data['result'].keys():
-            return self.data['result'][key]
+        if key in self.data['records'].keys():
+            return self.data['records'][key]
         else:
             return None
 
-    def visualize(self):
-        """
-        python.wx GUI to visualize the data
-        :return:
-        """
-
-    def save_result(self, fname):
+    def save_to_file(self, fname):
         """
         :type fname: str
         :param fname: file name
@@ -66,7 +96,7 @@ class AlResult:
         pickle.dump(self.data, fp, protocol=-1)
         fp.close()
 
-    def load_result(self, fname):
+    def load_from_file(self, fname):
         """
         :type fname: str
         :param fname: file name
