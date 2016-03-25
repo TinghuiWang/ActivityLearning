@@ -42,31 +42,31 @@ if __name__ == '__main__':
         learning_result_fname = 'dt_learning_' + datafile + '.pkl'
         learning_result = AlResult(result_name='%s decision tree' % datafile, data_fname=datafile, mode='by_week')
         if os.path.exists(learning_result_fname):
-            learning_result.load_result(learning_result_fname)
+            learning_result.load_from_file(learning_result_fname)
         for week_id in range(len(week_array) - 1):
             train_index = range(0, week_array[week_id])
             test_index = range(week_array[week_id], week_array[week_id + 1])
             decision_tree = DecisionTree(feature.x.shape[1], feature.num_enabled_activities)
             # Load Decision Tree Data
-            result_key = 'week %d' % week_id
-            result = learning_result.get_result_by_key(result_key)
-            if result is None:
+            record_key = 'week %d' % week_id
+            record = learning_result.get_record_by_key(record_key)
+            if record is None:
                 decision_tree.build(feature.x[train_index][:], feature.y[train_index])
                 predicted_y = decision_tree.classify(feature.x[test_index][:])
                 confusion_matrix = get_confusion_matrix(num_classes=feature.num_enabled_activities,
                                                         label=feature.y[test_index], predicted=predicted_y)
-                (performance_overall, performance_per_class) = \
+                (overall_performance, per_class_performance) = \
                     get_performance_array(num_classes=feature.num_enabled_activities,
                                           confusion_matrix=confusion_matrix)
-                learning_result.add_result(decision_tree.export_to_dict(), key=result_key,
+                learning_result.add_record(decision_tree.export_to_dict(), key=record_key,
                                            confusion_matrix=confusion_matrix,
-                                           performance_overall=performance_overall,
-                                           performance_per_class=performance_per_class)
+                                           overall_performance=overall_performance,
+                                           per_class_performance=per_class_performance)
             else:
-                decision_tree.load_from_dict(result['model'])
-                confusion_matrix = result['confusion_matrix']
-                overall_performance = result['overall_performance']
-                per_class_performance = result['per_class_performance']
+                decision_tree.load_from_dict(record['model'])
+                confusion_matrix = record['confusion_matrix']
+                overall_performance = record['overall_performance']
+                per_class_performance = record['per_class_performance']
             overall_list_row += 1
             overall_sheet.write(overall_list_row, 0, datafile)
             overall_sheet.write(overall_list_row, 1, ('week %3d' % week_id))
@@ -81,5 +81,5 @@ if __name__ == '__main__':
                 dataset_sheet.write(r+1, 0, activity_label)
                 for c in range(num_performance):
                     dataset_sheet.write(r+1, c+1, per_class_performance[r][c])
-        learning_result.save_result(learning_result_fname)
+        learning_result.save_to_file(learning_result_fname)
     book.save('casas_dt_results.xls')
