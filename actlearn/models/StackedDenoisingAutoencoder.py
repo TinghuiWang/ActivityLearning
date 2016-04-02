@@ -190,7 +190,7 @@ class StackedDenoisingAutoencoder(Model):
         data = {
             'type': 'model',
             'name': 'StackedDenoisingAutoencoder',
-            'data': self.params,
+            'data': [np.array(param.get_value()) for param in self.params],
             'modified': time.time()
         }
         return data
@@ -209,7 +209,7 @@ class StackedDenoisingAutoencoder(Model):
         # Load Model Data
         loaded_params = data['data']
         for param, loaded_param in zip(self.params, loaded_params):
-            param.set_value(loaded_param.get_value())
+            param.set_value(loaded_param)
 
     def save(self, filename):
         """
@@ -265,6 +265,7 @@ class StackedDenoisingAutoencoder(Model):
                     monitors=self.pretrain_monitor_array[i])
                 for monitor_index, monitor in enumerate(self.monitors):
                     self.logger.info("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+        return
 
     def do_reconstruction(self, data):
         """
@@ -295,6 +296,7 @@ class StackedDenoisingAutoencoder(Model):
         return prediction
 
     def do_fine_tuning(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
+        monitor_results = None
         self.cost = self.logLayer.cost
         for i in range(num_epochs):
             self.logger.info('epoch %d' % i)
@@ -304,6 +306,7 @@ class StackedDenoisingAutoencoder(Model):
                 learning_rate_array=learning_rate_array)
             for monitor_index, monitor in enumerate(self.monitors):
                 self.logger.info("\t%10s: %f" % (monitor.name, monitor_results[monitor_index]))
+        return monitor_results
 
     def do_log_layer_training_only(self, data, label, num_data, batch_size, learning_rate_array, num_epochs=1):
         self.cost = self.logLayer.cost
