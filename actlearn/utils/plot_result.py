@@ -24,7 +24,7 @@ def plot_result_time_series(filename_array, fig_fname='', fig_format='pdf',
     for fname in filename_array:
         if os.path.exists(fname):
             cur_data = AlResult()
-            cur_data.load_result(fname=fname)
+            cur_data.load_from_file(fname=fname)
             learning_data.append(cur_data)
         else:
             logger.error('Cannot find file %s' % fname)
@@ -35,12 +35,12 @@ def plot_result_time_series(filename_array, fig_fname='', fig_format='pdf',
     # 1. Same length?
     # 2. By week or by day?
     result_mode = learning_data[0].get_mode()
-    curve_length = learning_data[0].get_num_results()
+    curve_length = learning_data[0].get_num_records()
     curve_x_label = learning_data[0].get_record_keys()
     for result_data in learning_data:
         if result_data.get_mode() != result_mode:
             load_error = True
-        cur_length = result_data.get_num_results()
+        cur_length = result_data.get_num_records()
         if cur_length != curve_length:
             logger.warning('In consistence length of learning curve: %s has %d items' %
                            (result_data.get_name(), cur_length))
@@ -78,7 +78,7 @@ def plot_result_time_series(filename_array, fig_fname='', fig_format='pdf',
         curve_name.append(result_data.get_name())
         cur_curve = []
         for record_key in result_data.get_record_keys():
-            cur_curve.append(result_data.get_result_by_key(record_key)[performance_name][performance_key_id])
+            cur_curve.append(result_data.get_record_by_key(record_key)[performance_name][performance_key_id])
         curve_value.append(cur_curve)
     # Plot it using plt
     x = range(curve_length)
@@ -87,12 +87,13 @@ def plot_result_time_series(filename_array, fig_fname='', fig_format='pdf',
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     for i in range(len(curve_name)):
-        plt.plot(x, curve_value[i], label=curve_name[i])
+        plt.plot(x, curve_value[i], '.-', label=curve_name[i], linewidth=1.0)
     ax.set_xticks(x)
     ax.set_xticklabels(x_label, rotation='vertical')
     ax.set_yticks(y)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels)
+    plt.grid(b=True, which='major', linestyle='--', linewidth=1.0, alpha=0.5)
     if fig_fname != '':
         fig.savefig(fig_fname, transparent=True, format=fig_format, bbox_inches='tight')
     else:
