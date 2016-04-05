@@ -32,7 +32,7 @@ class AlFeatureUpdateRoutineDominantSensor (AlFeatureUpdateRoutineTemplate):
                 sensor_count[data_list[cur_index - index]['sensor1']] += 1
             else:
                 sensor_count[data_list[cur_index - index]['sensor1']] = 1
-            if 'sensor2' in data_list[cur_index - index].keys():
+            if 'sensor2' in data_list[cur_index - index].keys() and data_list[cur_index - index]['sensor2'] is not None:
                 if data_list[cur_index - index]['sensor2'] in sensor_count.keys():
                     sensor_count[data_list[cur_index - index]['sensor2']] += 1
                 else:

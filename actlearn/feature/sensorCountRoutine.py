@@ -32,7 +32,7 @@ class AlFeatureSensorCountRoutine (AlFeatureUpdateRoutineTemplate):
         for index in range(0, window_size):
             if data_list[cur_index - index]['sensor1'] in self.sensor_count.keys():
                 self.sensor_count[data_list[cur_index - index]['sensor1']] += 1
-            if 'sensor2' in data_list[cur_index - index].keys():
+            if 'sensor2' in data_list[cur_index - index].keys() and data_list[cur_index - index]['sensor2'] is not None:
                 if data_list[cur_index - index]['sensor2'] in self.sensor_count.keys():
                     self.sensor_count[data_list[cur_index - index]['sensor2']] += 1
 

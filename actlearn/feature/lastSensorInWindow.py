@@ -28,7 +28,10 @@ class AlFeatureEventSensor(AlFeatureTemplate):
         :return: a double value
         """
         sensor_label1 = data_list[cur_index]['sensor1']
-        sensor_label2 = data_list[cur_index]['sensor2']
+        if 'sensor2' in data_list[cur_index].keys() and data_list[cur_index]['sensor2'] is not None:
+            sensor_label2 = data_list[cur_index]['sensor2']
+        else:
+            sensor_label2 = None
         if self.per_sensor:
             if sensor_name is not None:
                 if sensor_name == sensor_label1 or sensor_name == sensor_label2:

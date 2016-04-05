@@ -29,9 +29,11 @@ class AlFeatureUpdateSensorElapseTime (AlFeatureUpdateRoutineTemplate):
                 self.sensor_fire_log[sensor_label] = data_list[cur_index - window_size + 1]['datetime']
             for i in range(0, window_size):
                 self.sensor_fire_log[data_list[cur_index - i]['sensor1']] = data_list[cur_index - i]['datetime']
-                self.sensor_fire_log[data_list[cur_index - i]['sensor2']] = data_list[cur_index - i]['datetime']
+                if 'sensor2' in data_list[cur_index].keys() and data_list[cur_index]['sensor2'] is not None:
+                    self.sensor_fire_log[data_list[cur_index - i]['sensor2']] = data_list[cur_index - i]['datetime']
         self.sensor_fire_log[data_list[cur_index]['sensor1']] = data_list[cur_index]['datetime']
-        self.sensor_fire_log[data_list[cur_index]['sensor2']] = data_list[cur_index]['datetime']
+        if 'sensor2' in data_list[cur_index].keys() and data_list[cur_index]['sensor2'] is not None:
+            self.sensor_fire_log[data_list[cur_index]['sensor2']] = data_list[cur_index]['datetime']
 
     def clear(self):
         self.sensor_fire_log = {}
