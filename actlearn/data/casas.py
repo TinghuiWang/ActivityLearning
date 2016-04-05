@@ -31,7 +31,8 @@ def load_casas_from_file(data_filename, translation_filename=None,
     # Initialize AlData Structure
     data = AlData()
     # Load Translation File
-    data.load_sensor_translation_from_file(dataset_dir + translation_filename)
+    if translation_filename is not None:
+        data.load_sensor_translation_from_file(dataset_dir + translation_filename)
     # Load Data File
     data.load_data_from_file(dataset_dir + data_filename)
     # Some basic statistical calculations
