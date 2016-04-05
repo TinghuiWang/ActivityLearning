@@ -71,7 +71,11 @@ class AlData(object):
                         cur_data_dict['activity'] = word_list[5]
                 else:
                     sensor_id = word_list[2]
-                    if sensor_id in self.sensor_dict.keys():
+                    if len(self.sensor_dict) == 0:
+                        # No translation available
+                        cur_data_dict['sensor1'] = sensor_id
+                        cur_data_dict['sensor2'] = None
+                    elif sensor_id in self.sensor_dict.keys():
                         cur_data_dict['sensor1'] = self.sensor_dict[sensor_id][0]
                         cur_data_dict['sensor2'] = self.sensor_dict[sensor_id][1]
                     else:
@@ -90,15 +94,17 @@ class AlData(object):
                         self.activity_info[cur_activity_label] = {'freq': 1}
                 # Add Sensor Frequency Calculation
                 cur_sensor = cur_data_dict['sensor1']
-                if cur_sensor in self.sensor_info.keys():
-                    self.sensor_info[cur_sensor]['freq'] += 1
-                else:
-                    self.sensor_info[cur_sensor] = {'freq': 1}
+                if cur_sensor is not None:
+                    if cur_sensor in self.sensor_info.keys():
+                        self.sensor_info[cur_sensor]['freq'] += 1
+                    else:
+                        self.sensor_info[cur_sensor] = {'freq': 1}
                 cur_sensor = cur_data_dict['sensor2']
-                if cur_sensor in self.sensor_info.keys():
-                    self.sensor_info[cur_sensor]['freq'] += 1
-                else:
-                    self.sensor_info[cur_sensor] = {'freq': 1}
+                if cur_sensor is not None:
+                    if cur_sensor in self.sensor_info.keys():
+                        self.sensor_info[cur_sensor]['freq'] += 1
+                    else:
+                        self.sensor_info[cur_sensor] = {'freq': 1}
                 # Add curData to dataArray
                 self.data.append(cur_data_dict)
         else:
