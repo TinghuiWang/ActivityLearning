@@ -261,6 +261,17 @@ class AlFeature(object):
             self.add_sensor(sensor_label)
         self.logger.debug('Add %d Sensors into sensorList' % len(self.sensor_list))
 
+    def get_enabled_sensors(self):
+        """
+        Get label list of sensors that are enabled
+        :return: list
+        """
+        enabled_sensor_array = []
+        for sensor_label in self.sensor_list.keys():
+            if self.sensor_list[sensor_label]['enable']:
+                enabled_sensor_array.append(sensor_label)
+        return enabled_sensor_array
+
     def add_routine(self, routine):
         """
         Add routine to feature update routine list
@@ -550,6 +561,20 @@ class AlFeature(object):
                     break
         return feature_name, sensor_name
 
+    def get_column_indices_by_sensor(self, sensor_label):
+        """
+        Get array of column indices which are associated with specified sensor
+        :param sensor_label:
+        :return:
+        """
+        indices_array = []
+        for index in range(self.num_static_features, self.num_enabled_features):
+            sensor_id = (index - self.num_static_features) % self.num_enabled_sensors
+            specified_sensor_id = self.sensor_list[sensor_label]['index']
+            if sensor_id == specified_sensor_id:
+                indices_array.append(index)
+        return indices_array
+
     def save_data_as_arff(self, filename=None):
         """
         Save populated feature data array as ARFF file
@@ -583,10 +608,10 @@ class AlFeature(object):
         for row_id in range(0, num_rows):
             for col_id in range(0, num_cols):
                 if col_id == num_cols - 1:
-                    f.write('%f\n' % self.x[row_id][col_id])
+                    f.write('%f,' % self.x[row_id][col_id])
                 else:
                     f.write('%f,' % self.x[row_id][col_id])
-            f.write('%d' % self.y[row_id])
+            f.write(' %d\n' % self.y[row_id])
         f.close()
 
     def save_data_as_xls(self, filename, start_id):
