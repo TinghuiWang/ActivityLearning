@@ -133,7 +133,7 @@ cdef class DecisionTree:
         cdef unsigned long num_left
         # Allocate space for current node
         node = self.allocate_tree_node()
-        #self.logger.debug('Node Allocated at %x' % (<unsigned long> node))
+        # self.logger.debug('Node Allocated at %x' % (<unsigned long> node))
         # Set Parents
         node.parent = parent
         # Records the number of training instances within the tree
@@ -141,44 +141,46 @@ cdef class DecisionTree:
         if num_train == 0:
             # No more training examples left, make it leaf
             node.classId = node.parent.classId
-            #self.logger.debug('No More Training instances. This is a leaf node')
+            # self.logger.debug('No More Training instances. This is a leaf node')
         else:
             # Populate array with a list of training example IDs
             node.instances = train_array
+            # self.logger.debug([train_array[i] for i in range(num_train)])
             # Find Majority Class, whether to further split current node and the count of the majority class
             (major_class, need_split, major_class_count) = self.find_major_class(train_array, num_train)
             node.classId = major_class
             node.numRight = major_class_count
-            #self.logger.debug('num_train: %d, Major class: %d, Number of instances: %d, split: %d' %
-            #                 (<int> num_train, major_class, <int> major_class_count, need_split))
-            #self.logger.debug([train_array[i] for i in range(num_train)])
+            # self.logger.debug('num_train: %d, Major class: %d, Number of instances: %d, split: %d' %
+            #                  (<int> num_train, major_class, <int> major_class_count, need_split))
             # If all examples in training array belong to same class or examples too small
             # make current node a leaf node (return here directly)
             # Otherwise, find the attribute and best split and recursively build the sub-tree
             if major_class_count != num_train and need_split != 0:
-                #self.logger.debug('Start Splitting')
-                self.select_attributes(train_array, num_train, node)
-                # sort train_array according to the best attribute and threshold
-                self.index_sort(train_array, num_train, node.attribute)
-                # Get the number of instances whose attribute is smaller than threshold
-                num_left = 0
-                while self.x[train_array[num_left]][node.attribute] < node.threshold:
-                    num_left += 1
-                node.numChildren = 2
-                node.children = <DecisionTreeNode **> PyMem_Malloc(2 * sizeof(DecisionTreeNode *))
-                # Recursively construct sub-tree
-                self.logger.info('Create Sub Tree: left %d, right %d' % (num_left, num_train - num_left))
-                node.children[0] = self.build_tree_node(node.instances, num_left, node)
-                if node.children[0].numChildren > 0:
-                    if node.children[0].children[0] == NULL or node.children[0].children[1] == NULL:
-                        self.logger.error("NULL Children Found. node instances:")
-                        self.logger.error([node.instances[k] for k in range(node.numInstances)])
-                node.children[1] = self.build_tree_node(&(node.instances[num_left]), num_train - num_left, node)
-                if node.children[1].numChildren > 0:
-                    if node.children[1].children[0] == NULL or node.children[1].children[1] == NULL:
-                        self.logger.error("NULL Children Found. node instances:")
-                        self.logger.error([node.instances[k] for k in range(node.numInstances)])
-                self.logger.info('Sub Tree Finished: left %d, right %d' % (num_left, num_train - num_left))
+                # self.logger.debug('Start Splitting')
+                if self.select_attributes(train_array, num_train, node):
+                    # sort train_array according to the best attribute and threshold
+                    self.index_sort(train_array, num_train, node.attribute)
+                    # Get the number of instances whose attribute is smaller than threshold
+                    num_left = 0
+                    while self.x[train_array[num_left]][node.attribute] < node.threshold:
+                        num_left += 1
+                    node.numChildren = 2
+                    node.children = <DecisionTreeNode **> PyMem_Malloc(2 * sizeof(DecisionTreeNode *))
+                    # Recursively construct sub-tree
+                    self.logger.info('Create Sub Tree: left %d, right %d' % (num_left, num_train - num_left))
+                    node.children[0] = self.build_tree_node(node.instances, num_left, node)
+                    if node.children[0].numChildren > 0:
+                        if node.children[0].children[0] == NULL or node.children[0].children[1] == NULL:
+                            self.logger.error("NULL Children Found. node instances:")
+                            self.logger.error([node.instances[k] for k in range(node.numInstances)])
+                    node.children[1] = self.build_tree_node(&(node.instances[num_left]), num_train - num_left, node)
+                    if node.children[1].numChildren > 0:
+                        if node.children[1].children[0] == NULL or node.children[1].children[1] == NULL:
+                            self.logger.error("NULL Children Found. node instances:")
+                            self.logger.error([node.instances[k] for k in range(node.numInstances)])
+                    self.logger.info('Sub Tree Finished: left %d, right %d' % (num_left, num_train - num_left))
+                else:
+                    self.logger.info('Leaf Node: instances %d', node.numInstances)
             else:
                 self.logger.info('Leaf Node: instances %d', node.numInstances)
         return node
@@ -239,13 +241,17 @@ cdef class DecisionTree:
                     best_gain_ratio = self.split_info_array[attribute_index].gainRatio
                     # self.logger.debug('current best: index: %d, threshold %.5f, gain %.5f' %
                     #                   (best_attribute_index, best_threshold, best_gain_ratio))
-        # Update Info for current tree node
-        if best_gain_ratio > 0.:
-            dt_node.attribute = best_attribute_index
-            """Need to Update the threshold calculation function C45SplitPoint"""
-            dt_node.threshold = best_threshold
-            # self.logger.debug("select_attributes: best attribute %d, threshold %f" %
-            #           (best_attribute_index, best_threshold))
+            # Update Info for current tree node
+            if best_gain_ratio > 0.:
+                dt_node.attribute = best_attribute_index
+                """Need to Update the threshold calculation function C45SplitPoint"""
+                dt_node.threshold = best_threshold
+                # self.logger.debug("select_attributes: best attribute %d, threshold %f" %
+                #           (best_attribute_index, best_threshold))
+            return True
+        else:
+            # No Valid split count
+            return False
 
     cdef find_best_numeric_split(self, unsigned long * train_array,
                                  unsigned long num_train, DecisionTreeNode* dt_node,
@@ -391,7 +397,7 @@ cdef class DecisionTree:
         cdef unsigned long index_left = 0
         cdef unsigned long index_right = 0
         cdef unsigned long index = 0
-        # self.logger.info([train_array[i] for i in range(num_train)])
+        # self.logger.debug([train_array[i] for i in range(num_train)])
         # If there is only one item - no need to sort
         if num_train == 1:
             return
@@ -405,8 +411,8 @@ cdef class DecisionTree:
         index = 0
         index_left = 0
         index_right = num_left
-        # self.logger.info("merge: num_train %d" % num_train)
-        # self.logger.info([train_array[i] for i in range(num_train)])
+        # self.logger.debug("merge: num_train %d" % num_train)
+        # self.logger.debug([train_array[i] for i in range(num_train)])
         for index in range(num_train):
             # Compare Left and right
             if index_left == num_left:
@@ -437,7 +443,7 @@ cdef class DecisionTree:
         """
         cdef float entropy = 0.
         cdef unsigned long i = 0
-        # self.logger.debug([list[i] for i in range(list_len)])
+        # self.logger.debug('entropy: ' + str([list[i] for i in range(list_len)]))
         for i in range(list_len):
             if list[i] != 0:
                 entropy -= (list[i] / <float> total) * log2f(list[i] / <float> total)
