@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import matplotlib.collections as collections
 from matplotlib.patches import Rectangle
 
@@ -11,13 +12,19 @@ default_color_list = ['yellow', 'blue', 'green',
                       'lightpink', 'lime', 'gray', 'darkgoldenrod',
                       'dogerblue', 'deeppink']
 
-def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activity=-1, max_days=30):
+
+def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activity=-1, max_days=30, legend=None,
+                   fig_fname='', fig_format='pdf'):
     """
     :type time_array: np.array
     :param time_array: array of time in float format
     :type label: np.array
     :param label: array of class label (int)
     :param classified:
+    :type fig_fname: str
+    :param fig_fname: file name to save the plot
+    :type fig_format: str
+    :param fig_format: format of the file to save the plot
     :return:
     """
     # Get number of events
@@ -90,19 +97,25 @@ def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activ
             num_days += 1
         # If label changed add rectangle position to bar_list
         if cur_label != prev_label:
-            new_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
+            if datetime.fromtimestamp(time_array[i-1]).date() != cur_datetime.date():
+                new_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
+            else:
+                new_start_x = (time_array[i-1] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
             length = new_start_x - label_start_x
             bar_list.append(((label_start_x, (30+label_height)*num_days + 30 - label_height),
                              length, label_height, color_list[prev_label]))
-            label_start_x = new_start_x
+            label_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
             prev_label = cur_label
         if classified is not None:
             if cur_classified != prev_classified:
-                new_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
+                if datetime.fromtimestamp(time_array[i-1]).date() != cur_datetime.date():
+                    new_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
+                else:
+                    new_start_x = (time_array[i-1] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
                 length = new_start_x - classified_start_x
                 bar_list.append(((classified_start_x, (30+label_height)*num_days + 10),
                                  length, 10, color_list[prev_classified]))
-                classified_start_x = new_start_x
+                classified_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
                 prev_classified = cur_classified
             if cur_error != prev_error:
                 new_start_x = (time_array[i] - time.mktime(cur_datetime.date().timetuple())) / float(24*60*60) * 2400
@@ -116,6 +129,10 @@ def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activ
     # Assume time normalized
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
+    if legend is not None:
+        legend_handler = [mpatches.Patch(color=color_list[index], label=activity)
+                          for index, activity in enumerate(legend)]
+        plt.legend(handles=legend_handler, loc='center left', borderaxespad=0, bbox_to_anchor=(1.05, 0.5))
     ax.set_xlim([0, 2400])
     ax.set_ylim([0, num_days * (30 + label_height)])
     x = range(0, 2400, 100)
@@ -128,4 +145,7 @@ def event_bar_plot(time_array, label, num_classes, classified=None, ignore_activ
     ax.set_yticklabels(y_label)
     for bar in bar_list:
         ax.add_artist(Rectangle(bar[0], bar[1], bar[2], color=bar[3]))
-    plt.show()
+    if fig_fname != '':
+        fig.savefig(fig_fname, transparent=True, format=fig_format, bbox_inches='tight')
+    else:
+        plt.show()
